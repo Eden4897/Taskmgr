@@ -1,0 +1,27 @@
+{
+  "name": "Taskmgr",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Eden4897/Taskmgr.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Eden4897/Taskmgr/issues"
+  },
+  "homepage": "https://github.com/Eden4897/Taskmgr#readme",
+  "dependencies": {
+    "discord.js": "^12.5.1",
+    "mongoose": "^5.11.15"
+  },
+  "devDependencies": {
+    "@types/ws": "^7.4.0"
+  }
+}
