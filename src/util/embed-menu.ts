@@ -92,40 +92,22 @@ export class EmbedMenu {
             collector.stop();
           }
         ];
-<<<<<<< HEAD
         await func.handler(...args);
-=======
-          ((func as ConditionalHandler<any>).condition
-            ? await (func as ConditionalHandler<any>).handler(...args)
-            : await (func as ReactionHandler<any>)(...args))
->>>>>>> d3cb77217d5cc53ce5fdafc172402f3edf125b9a
 
         _this.currentPage.allAction?.call(...args);
         msg.edit(
           await _this.currentPage.embedGenerator(_this.currentPage.cache)
         );
-<<<<<<< HEAD
         const activeHandlers = _this.currentPage.emojiHandlers.filter(
           (emojiHandler) => {
             return (
               !emojiHandler.condition ||
               emojiHandler.condition(_this.currentPage.cache)
             );
-=======
-        /* React with the emojis */
-        Object.keys(_this.currentPage.emojis).map((emoji) => {
-          const condition = (_this.currentPage.emojis[emoji] as ConditionalHandler<any>).condition;
-          if (!condition || condition(_this.currentPage.cache)) {
-            if (!msg.reactions.cache.get(emoji)) {
-              msg.react(emoji);
-            }
-          } else {
-            msg.reactions.cache.get(emoji)?.remove();
->>>>>>> d3cb77217d5cc53ce5fdafc172402f3edf125b9a
           }
         );
 
-        for(let activeHandler of activeHandlers){
+        for (let activeHandler of activeHandlers) {
           if (!msg.reactions.cache.get(activeHandler.emoji)) {
             msg.react(activeHandler.emoji);
           }
@@ -166,14 +148,7 @@ export class EmbedMenu {
 export class MenuPage<T = void> {
   cache: T;
   embedGenerator: (data: T) => Promise<MessageEmbed> | MessageEmbed;
-<<<<<<< HEAD
   emojiHandlers: EmojiHandler<T>[];
-=======
-  emojis: {
-    [name: string]:
-      ReactionHandler<T> | ConditionalHandler<T>;
-  };
->>>>>>> d3cb77217d5cc53ce5fdafc172402f3edf125b9a
   allAction?: ReactionHandler<T>;
   endAction?: (data: T) => any;
 }
@@ -185,15 +160,8 @@ type ReactionHandler<T> = (
   endMenu: () => void
 ) => Promise<void> | void;
 
-<<<<<<< HEAD
 type EmojiHandler<T> = {
   emoji: string;
   handler: ReactionHandler<T>;
   condition?: (cache: T) => boolean;
 };
-=======
-export interface ConditionalHandler<T> {
-  condition: (data: T) => boolean;
-  handler: ReactionHandler<T>;
-}
->>>>>>> d3cb77217d5cc53ce5fdafc172402f3edf125b9a

@@ -1,4 +1,5 @@
 import { Document, Schema } from 'mongoose';
+import { enumKeys } from '../../util/enum';
 import { CardDifficulty } from '../enums/card-difficulty';
 import { StreakResetInterval } from '../enums/streak-reset-interval';
 
@@ -7,8 +8,8 @@ export const habitCardSchema: Schema = new Schema({
   description: String,
   difficulty: {
     type: String,
-    enum: Object.keys(CardDifficulty),
-    default: CardDifficulty.Easy
+    enum: enumKeys(CardDifficulty),
+    default: CardDifficulty[CardDifficulty.Easy]
   },
   positive: {
     type: Boolean,
@@ -32,8 +33,8 @@ export const habitCardSchema: Schema = new Schema({
   },
   streakReset: {
     type: String,
-    enum: Object.keys(StreakResetInterval),
-    default: StreakResetInterval.Daily
+    enum: enumKeys(StreakResetInterval),
+    default: StreakResetInterval[StreakResetInterval.Daily]
   },
   tags: {
     type: [String],

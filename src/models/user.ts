@@ -4,30 +4,53 @@ import { IRegularCard, regularCardSchema } from './schemas/regular-card';
 import { IRewardCard, rewardCardSchema } from './schemas/rewardCardSchema';
 import { ITodoCard, todoCardSchema } from './schemas/todo-card';
 
-const userSchema: Schema = new Schema(
-  {
-    id: Number,
-    health: Number,
-    maxHealth: Number,
-    inventory: [
+const userSchema: Schema = new Schema({
+  id: Number,
+  health: {
+    type: Number,
+    default: 50
+  },
+  maxHealth: {
+    type: Number,
+    default: 50
+  },
+  inventory: {
+    type: [
       {
         id: String,
-        amount: Number,
-      },
+        amount: Number
+      }
     ],
-    lists: {
-      habits: [habitCardSchema],
-      regulars: [regularCardSchema],
-      todos: [todoCardSchema],
-      rewards: [rewardCardSchema],
-    },
-    xp: Number,
-    party: String,
+    default: []
   },
-  {
-    timestamps: true,
-  }
-);
+  lists: {
+    habits: {
+      type: [habitCardSchema],
+      default: []
+    },
+    regulars: {
+      type: [regularCardSchema],
+      default: []
+    },
+    todos: {
+      type: [todoCardSchema],
+      default: []
+    },
+    rewards: {
+      type: [rewardCardSchema],
+      default: []
+    }
+  },
+  xp: {
+    type: Number,
+    default: null
+  },
+  party: {
+    type: String,
+    default: null
+  },
+  tzOffset: Number
+});
 
 export interface IUser extends Document {
   id: string;
@@ -45,8 +68,7 @@ export interface IUser extends Document {
   };
   xp: number;
   party?: string;
-
-  createdAt: Date;
+  tzOffset: number;
 }
 
 export default model(`User`, userSchema, `users`);

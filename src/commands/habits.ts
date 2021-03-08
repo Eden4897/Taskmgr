@@ -6,19 +6,13 @@ import { IHabitCard } from '../models/schemas/habit-card';
 import User, { IUser } from '../models/user';
 import awaitMessage from '../util/await-message';
 import { EmbedMenu, MenuPage } from '../util/embed-menu';
-import { emojiLiteral, emojiReactable } from '../util/emojis';
 
 export default new Command({
   name: `habits`,
   description: `List your habits`,
   usage: `{p}habits`,
   example: `{p}habits`,
-  async execute(
-    bot: Client,
-    msg: Message,
-    args: Array<string>,
-    help: MessageEmbed
-  ) {
+  async execute(bot: Client, msg: Message, args: string[], help: MessageEmbed) {
     let user = (await User.findOne({
       id: msg.author.id
     })) as IUser;
@@ -38,7 +32,7 @@ export default new Command({
         selected: number;
         embedIndex: number;
       }): Promise<MessageEmbed> => {
-        const embeds: Array<MessageEmbed> = [];
+        const embeds: MessageEmbed[] = [];
 
         for (let i = 0; i < user.lists.habits.length; i += 10) {
           embeds.push(
@@ -54,22 +48,25 @@ export default new Command({
                       /* Description */
                       `*${habitCard.description}*`,
                       /* Streak */
-                      `Streak${emojiLiteral('streak')}: ${
+                      `Streak: ${
                         habitCard.positive ? `+${habitCard.positiveStreak}` : ``
                       }${
-                        habitCard.positiveStreak && habitCard.negativeStreak
-                          ? ` | `
-                          : ``
+                        habitCard.positive && habitCard.negative ? ` | ` : ``
                       }${
                         habitCard.negative ? `-${habitCard.negativeStreak}` : ``
                       }`,
                       /* Difficulty */
-                      `**Difficulty:** ${habitCard.difficulty}`
-                    ].map((l) => (index == listCache.selected ? `> ` : ``) + l);
+                      `**Difficulty:** ${habitCard.difficulty}`,
+                      /* Tags */
+                      habitCard.tags.map((tag) => `#${tag}`).join(' ')
+                    ]
+                      .filter(Boolean)
+                      .map(
+                        (content) =>
+                          (index == listCache.selected ? `> ` : ``) + content
+                      );
 
-                    const _ = index == listCache.selected ? `> ` : ``;
-
-                    return lines.join('\n');
+                    return lines.filter(Boolean).join('\n');
                   })
                   .join('\n\n')
               )
@@ -90,8 +87,9 @@ export default new Command({
               .setDescription(`No habits yet! Click ➕ to add a new habit!`);
       },
       emojiHandlers: [
+        /* Navigate up */
         {
-          emoji: emojiReactable('navigateDown'),
+          emoji: 'navigateDown',
           condition: () => user.lists.habits.length > 0,
           handler: (listCache) => {
             listCache.selected++;
@@ -110,8 +108,9 @@ export default new Command({
             }
           }
         },
+        /* Navigate down */
         {
-          emoji: emojiReactable('navigateUp'),
+          emoji: 'navigateUp',
           condition: () => user.lists.habits.length > 0,
           handler: (listCache) => {
             listCache.selected--;
@@ -127,7 +126,7 @@ export default new Command({
           }
         },
         {
-          emoji: emojiReactable('add'),
+          emoji: 'add',
           handler: async (listCache) => {
             await user.updateOne({
               $push: {
@@ -148,7 +147,7 @@ export default new Command({
           }
         },
         {
-          emoji: emojiReactable('edit'),
+          emoji: 'edit',
           condition: () => user.lists.habits.length > 0,
           handler: (listCache, switchPage) => {
             let habitCard: IHabitCard = user.lists.habits[listCache.selected];
@@ -157,7 +156,7 @@ export default new Command({
                 selected: 0
               },
               embedGenerator: (cardCache) => {
-                const lines: Array<[key: string, value: string]> = [
+                const lines: [key: string, value: string][] = [
                   [`**Name:**`, habitCard.name],
                   [`**Description:**`, habitCard.description],
                   [
@@ -170,10 +169,10 @@ export default new Command({
                   ],
                   [`**Difficulty:**`, habitCard.difficulty.toString()],
                   [`**Importance:**`, habitCard.importance.toString()],
-                  [`**Tags:**`, habitCard.tags.join(' ')],
+                  [`**Tags:**`, habitCard.tags.join(', ') || 'None'],
                   [
                     `**When to reset streak(s):**`,
-                    StreakResetInterval[habitCard.streakReset]
+                    habitCard.streakReset.toString()
                   ]
                 ];
                 lines[cardCache.selected][1] = `\`${
@@ -185,20 +184,20 @@ export default new Command({
               },
               emojiHandlers: [
                 {
-                  emoji: emojiReactable('return'),
+                  emoji: 'return',
                   handler: (_1, _2, switchToPreviousPage) => {
                     switchToPreviousPage();
                   }
                 },
                 {
-                  emoji: emojiReactable('navigateDown'),
+                  emoji: 'navigateDown',
                   handler: (cardCache) => {
                     cardCache.selected =
                       cardCache.selected == 7 ? 0 : cardCache.selected + 1;
                   }
                 },
                 {
-                  emoji: emojiReactable('navigateUp'),
+                  emoji: 'navigateUp',
                   handler: (cardCache) => {
                     cardCache.selected =
                       cardCache.selected == 0 ? 7 : cardCache.selected - 1;
@@ -206,7 +205,7 @@ export default new Command({
                 },
                 /* Edit name */
                 {
-                  emoji: emojiReactable('edit'),
+                  emoji: 'edit',
                   condition: (cardCache) => cardCache.selected == 0,
                   handler: async (cardCache) => {
                     const query = await msg.channel.send('Enter the new name:');
@@ -250,7 +249,7 @@ export default new Command({
                 },
                 /* Edit description */
                 {
-                  emoji: emojiReactable('edit'),
+                  emoji: 'edit',
                   condition: (cardCache) => cardCache.selected == 1,
                   handler: async (cardCache) => {
                     const query = await msg.channel.send(
@@ -296,7 +295,7 @@ export default new Command({
                 },
                 /* Toggle positive streak off */
                 {
-                  emoji: emojiReactable('positiveDisabled'),
+                  emoji: 'positiveDisabled',
                   condition: (cardCache) =>
                     cardCache.selected == 2 && habitCard.positive,
                   handler: async () => {
@@ -316,7 +315,7 @@ export default new Command({
                 },
                 /* Toggle positive streak on */
                 {
-                  emoji: emojiReactable('positiveEnabled'),
+                  emoji: 'positiveEnabled',
                   condition: (cardCache) =>
                     cardCache.selected == 2 && !habitCard.positive,
                   handler: async () => {
@@ -336,7 +335,7 @@ export default new Command({
                 },
                 /* Toggle negative streak off */
                 {
-                  emoji: emojiReactable('negativeDisabled'),
+                  emoji: 'negativeDisabled',
                   condition: (cardCache) =>
                     cardCache.selected == 3 && habitCard.negative,
                   handler: async () => {
@@ -356,7 +355,7 @@ export default new Command({
                 },
                 /* Toggle negative streak on */
                 {
-                  emoji: emojiReactable('negativeEnabled'),
+                  emoji: 'negativeEnabled',
                   condition: (cardCache) =>
                     cardCache.selected == 3 && !habitCard.negative,
                   handler: async () => {
@@ -376,10 +375,11 @@ export default new Command({
                 },
                 /* Increase Difficulty */
                 {
-                  emoji: emojiReactable('increaseDifficulty'),
+                  emoji: 'increaseDifficulty',
                   condition: (cardCache) =>
                     cardCache.selected == 4 &&
-                    Number(CardDifficulty[habitCard.difficulty]) < 4,
+                    Number(CardDifficulty[habitCard.difficulty]) <
+                      CardDifficulty.Extreme,
                   handler: async () => {
                     await User.updateOne(
                       {
@@ -400,10 +400,11 @@ export default new Command({
                 },
                 /* Decrease Difficulty */
                 {
-                  emoji: emojiReactable('decreaseDifficulty'),
+                  emoji: 'decreaseDifficulty',
                   condition: (cardCache) =>
                     cardCache.selected == 4 &&
-                    Number(CardDifficulty[habitCard.difficulty]) > 0,
+                    Number(CardDifficulty[habitCard.difficulty]) >
+                      CardDifficulty.Easy,
                   handler: async () => {
                     await User.updateOne(
                       {
@@ -424,7 +425,7 @@ export default new Command({
                 },
                 /* Increase Importance */
                 {
-                  emoji: emojiReactable('increaseImportance'),
+                  emoji: 'increaseImportance',
                   condition: (cardCache) =>
                     cardCache.selected == 5 && habitCard.importance < 5,
                   handler: async () => {
@@ -444,7 +445,7 @@ export default new Command({
                 },
                 /* Decrease Importance */
                 {
-                  emoji: emojiReactable('decreaseImportance'),
+                  emoji: 'decreaseImportance',
                   condition: (cardCache) =>
                     cardCache.selected == 5 && habitCard.importance > 1,
                   handler: async () => {
@@ -461,11 +462,147 @@ export default new Command({
                     })) as IUser;
                     habitCard = user.lists.habits[listCache.selected];
                   }
+                },
+                /* Add tag */
+                {
+                  emoji: 'addTag',
+                  condition: (cardCache) =>
+                    cardCache.selected == 6 && habitCard.tags.length <= 10,
+                  handler: async () => {
+                    const query = await msg.channel.send(
+                      'Please enter the new tag.'
+                    );
+                    const newTagMsg = await awaitMessage(
+                      msg.channel,
+                      msg.author
+                    );
+
+                    habitCard.tags.push(newTagMsg.content);
+
+                    await User.updateOne(
+                      {
+                        'lists.habits._id': habitCard._id
+                      },
+                      {
+                        'lists.habits.$.tags': habitCard.tags
+                      }
+                    );
+                    user = (await User.findOne({
+                      id: msg.author.id
+                    })) as IUser;
+                    habitCard = user.lists.habits[listCache.selected];
+
+                    query.delete();
+                    newTagMsg.delete().catch();
+                  }
+                },
+                /* Delete tag */
+                {
+                  emoji: 'deleteTag',
+                  condition: (cardCache) =>
+                    cardCache.selected == 6 && habitCard.tags.length >= 1,
+                  handler: async () => {
+                    await User.updateOne(
+                      {
+                        'lists.habits._id': habitCard._id
+                      },
+                      {
+                        'lists.habits.$.tags': habitCard.tags.pop()
+                      }
+                    );
+                    user = (await User.findOne({
+                      id: msg.author.id
+                    })) as IUser;
+                    habitCard = user.lists.habits[listCache.selected];
+                  }
+                },
+                /* Increase streak reset duration */
+                {
+                  emoji: 'increaseDuration',
+                  condition: (cardCache) =>
+                    cardCache.selected == 7 &&
+                    Number(StreakResetInterval[habitCard.streakReset]) <
+                      StreakResetInterval.Monthly,
+                  handler: async () => {
+                    await User.updateOne(
+                      {
+                        'lists.habits._id': habitCard._id
+                      },
+                      {
+                        'lists.habits.$.streakReset':
+                          StreakResetInterval[
+                            Number(StreakResetInterval[habitCard.streakReset]) +
+                              1
+                          ]
+                      }
+                    );
+                    user = (await User.findOne({
+                      id: msg.author.id
+                    })) as IUser;
+                    habitCard = user.lists.habits[listCache.selected];
+                  }
+                },
+
+                /* Decrease streak reset duration */
+                {
+                  emoji: 'decreaseDuration',
+                  condition: (cardCache) =>
+                    cardCache.selected == 7 &&
+                    Number(StreakResetInterval[habitCard.streakReset]) >
+                      StreakResetInterval.Daily,
+                  handler: async () => {
+                    await User.updateOne(
+                      {
+                        'lists.habits._id': habitCard._id
+                      },
+                      {
+                        'lists.habits.$.streakReset':
+                          StreakResetInterval[
+                            Number(StreakResetInterval[habitCard.streakReset]) -
+                              1
+                          ]
+                      }
+                    );
+                    user = (await User.findOne({
+                      id: msg.author.id
+                    })) as IUser;
+                    habitCard = user.lists.habits[listCache.selected];
+                  }
                 }
               ]
             } as MenuPage<{
               selected: number;
             }>);
+          }
+        },
+        {
+          emoji: 'sort',
+          condition: () => user.lists.habits.length > 0,
+          handler: async () => {
+            await user.updateOne({
+              'lists.habits': user.lists.habits.sort(
+                (a, b) => a.importance - b.importance
+              )
+            });
+            user = (await User.findOne({
+              id: msg.author.id
+            })) as IUser;
+          }
+        },
+        {
+          emoji: 'delete',
+          condition: () => user.lists.habits.length > 0,
+          handler: async (cardCache) => {
+            user.lists.habits.splice(cardCache.selected, 1);
+            await user.updateOne({
+              'lists.habits': user.lists.habits
+            });
+            cardCache.selected =
+              cardCache.selected > user.lists.habits.length - 1
+                ? user.lists.habits.length - 1 < 0
+                  ? 0
+                  : user.lists.habits.length - 1
+                : cardCache.selected;
           }
         }
       ]

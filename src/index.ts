@@ -1,9 +1,4 @@
-import {
-  Client,
-  Collection,
-  Message,
-  MessageEmbed,
-} from 'discord.js';
+import { Client, Collection, Message, MessageEmbed } from 'discord.js';
 import { readdir } from 'fs';
 import config from './util/global';
 import mongoose from './util/mongoose';
@@ -30,13 +25,13 @@ export enum ArgumentType {
   MemberMention,
   ChannelMention,
   RoleMention,
-  ID,
+  ID
 }
 
 export enum CommandType {
   All,
   DM,
-  Guild,
+  Guild
 }
 
 export function testArgument(argType: ArgumentType, value: string): boolean {
@@ -113,20 +108,20 @@ export const commands: Collection<string, Command> = new Collection<
   Command
 >();
 
-readdir(`${__dirname}\\commands`, (err, files) => {
+readdir(`${__dirname}/commands`, (err, files) => {
   if (err) return console.error;
   files.forEach((file: string) => {
     if (!file.endsWith(`.js`)) return;
-    const command: Command = require(`${__dirname}\\commands\\${file}`).default;
+    const command: Command = require(`${__dirname}/commands/${file}`).default;
     commands.set(command.name, command);
   });
 });
 
-readdir(`${__dirname}\\events/`, (err, files) => {
+readdir(`${__dirname}/events/`, (err, files) => {
   if (err) return console.error;
   files.forEach((file: string) => {
     if (!file.endsWith(`.js`)) return;
-    const event: () => any = require(`${__dirname}\\events\\${file}`).default;
+    const event: () => any = require(`${__dirname}/events/${file}`).default;
     const eventName: string = file.split(`.`)[0];
     bot.on(eventName, event.bind(null, bot));
   });
